@@ -1,3 +1,4 @@
+import { mockPortfolio } from "../data/mockPortfolio";
 export default function Dashboard() {
   return (
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "system-ui" }}>
@@ -42,7 +43,9 @@ export default function Dashboard() {
         <section style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
           <div style={cardStyle}>
             <h3>Total Net Worth</h3>
-            <p style={{ fontSize: 28 }}>£2,794,380</p>
+<p style={{ fontSize: 28 }}>
+  £{mockPortfolio.policies.reduce((sum, p) => sum + p.value, 0).toLocaleString()}
+</p>
           </div>
 
           <div style={cardStyle}>
