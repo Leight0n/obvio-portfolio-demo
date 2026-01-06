@@ -1,55 +1,28 @@
-import dynamic from "next/dynamic";
-import { useState } from "react";
-
-/**
- * Disable SSR for Recharts (REQUIRED for Next.js)
- */
-const ResponsiveContainer = dynamic(
-  () => import("recharts").then((m) => m.ResponsiveContainer),
-  { ssr: false }
-);
-const PieChart = dynamic(
-  () => import("recharts").then((m) => m.PieChart),
-  { ssr: false }
-);
-const Pie = dynamic(
-  () => import("recharts").then((m) => m.Pie),
-  { ssr: false }
-);
-const Cell = dynamic(
-  () => import("recharts").then((m) => m.Cell),
-  { ssr: false }
-);
-const Tooltip = dynamic(
-  () => import("recharts").then((m) => m.Tooltip),
-  { ssr: false }
-);
-
-/**
- * Mock policy data (guaranteed to render)
- */
-const policies = [
-  { name: "International Pension", value: 1180000 },
-  { name: "Investment Account", value: 820000 },
-  { name: "ISA", value: 430000 }
-];
-
-const COLORS = ["#ff7a00", "#0b1f2a", "#6b7280"];
+import { useMemo, useState } from "react";
+import { mockPortfolio } from "../data/mockPortfolio";
+import { fxRates } from "../data/fxRates";
 
 export default function Dashboard() {
-  const [currency] = useState("GBP");
+  const [currency, setCurrency] = useState("GBP");
 
-  const total = policies.reduce((sum, p) => sum + p.value, 0);
+  const totalNetWorth = useMemo(() => {
+    const total = mockPortfolio.policies.reduce((sum, policy) => {
+      const valueInGbp = policy.value * fxRates[policy.currency];
+      const displayValue = valueInGbp / fxRates[currency];
+      return sum + displayValue;
+    }, 0);
+
+    return Math.round(total);
+  }, [currency]);
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "system-ui" }}>
-      
       {/* Sidebar */}
       <aside
         style={{
           width: 220,
           background: "#0b1f2a",
-          color: "#fff",
+          color: "#ffffff",
           padding: 20
         }}
       >
@@ -62,9 +35,8 @@ export default function Dashboard() {
         </nav>
       </aside>
 
-      {/* Main */}
+      {/* Main content */}
       <main style={{ flex: 1, padding: 40, background: "#f5f7f9" }}>
-        
         {/* Header */}
         <header
           style={{
@@ -75,40 +47,88 @@ export default function Dashboard() {
           }}
         >
           <h1>Client Overview</h1>
-          <strong>{currency}</strong>
+
+          <select
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            style={{ padding: 6 }}
+          >
+            <option value="GBP">GBP</option>
+            <option value="EUR">EUR</option>
+            <option value="USD">USD</option>
+            <option value="AED">AED</option>
+            <option value="AUD">AUD</option>
+            <option value="QAR">QAR</option>
+            <option value="SAR">SAR</option>
+          </select>
         </header>
 
-        {/* Summary cards */}
+        {/* Cards */}
         <section
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 20,
-            marginBottom: 40
+            gap: 20
           }}
         >
-          <div style={card}>
+          <div style={cardStyle}>
             <h3>Total Net Worth</h3>
             <p style={{ fontSize: 28 }}>
-              {currency} {total.toLocaleString()}
+              {currency} {totalNetWorth.toLocaleString()}
+            </p>
+            <p style={{ opacity: 0.7, marginTop: 6, fontSize: 12 }}>
+              Converted using mock FX (GBP base)
             </p>
           </div>
 
-          <div style={card}>
+          <div style={cardStyle}>
             <h3>Policies</h3>
-            <p>{policies.length} Active</p>
+            <p>{mockPortfolio.policies.length} Active</p>
           </div>
 
-          <div style={card}>
+          <div style={cardStyle}>
             <h3>Last Updated</h3>
             <p>Today</p>
           </div>
         </section>
 
-        {/* Policy Pie */}
-        <section>
-          <h2>Policies</h2>
+        {/* Policies list (simple, for clarity) */}
+        <section style={{ marginTop: 30 }}>
+          <h2 style={{ marginBottom: 10 }}>Policies</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10 }}>
+            {mockPortfolio.policies.map((p) => (
+              <div key={p.id} style={rowStyle}>
+                <div>
+                  <strong>{p.name}</strong>
+                  <div style={{ opacity: 0.7, fontSize: 12 }}>
+                    {p.provider} • {p.currency}
+                  </div>
+                </div>
+                <div style={{ fontWeight: 700 }}>
+                  {p.currency} {p.value.toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
 
-          <div style={{ width: 420, height: 320 }}>
-            <ResponsiveContainer>
-              <PieChart>
+const cardStyle: React.CSSProperties = {
+  background: "#ffffff",
+  padding: 20,
+  borderRadius: 8,
+  boxShadow: "0 2px 6px rgba(0,0,0,0.08)"
+};
+
+const rowStyle: React.CSSProperties = {
+  background: "#ffffff",
+  padding: 14,
+  borderRadius: 8,
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
+};
