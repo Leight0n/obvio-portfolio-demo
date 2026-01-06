@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Layout from "../components/Layout";
 import {
   LineChart,
   Line,
@@ -8,19 +9,13 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-/* =========================
-   TYPES
-========================= */
 type Currency = "GBP" | "USD" | "EUR";
 
 type PortfolioPoint = {
   date: string;
-  totalValue: number; // base GBP
+  totalValue: number;
 };
 
-/* =========================
-   MOCK PERFORMANCE DATA
-========================= */
 const portfolioHistory: PortfolioPoint[] = [
   { date: "2019-01", totalValue: 820000 },
   { date: "2019-06", totalValue: 865000 },
@@ -36,127 +31,98 @@ const portfolioHistory: PortfolioPoint[] = [
   { date: "2024-06", totalValue: 2092600 },
 ];
 
-/* =========================
-   FX (mock)
-========================= */
 const fxRates: Record<Currency, number> = {
   GBP: 1,
   USD: 1.27,
   EUR: 1.17,
 };
 
-/* =========================
-   PAGE
-========================= */
 export default function Dashboard() {
   const [currency, setCurrency] = useState<Currency>("GBP");
 
-  const fx = fxRates[currency];
-
   const displayHistory = portfolioHistory.map((p) => ({
     date: p.date,
-    value: Math.round(p.totalValue * fx),
+    value: Math.round(p.totalValue * fxRates[currency]),
   }));
 
-  const latestValue =
+  const latest =
     displayHistory[displayHistory.length - 1]?.value ?? 0;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        fontFamily: "system-ui",
-      }}
-    >
-      {/* Sidebar */}
-      <aside
+    <Layout>
+      <h1>Client Overview</h1>
+
+      <div style={{ marginBottom: 24 }}>
+        Currency:&nbsp;
+        <select
+          value={currency}
+          onChange={(e) =>
+            setCurrency(e.target.value as Currency)
+          }
+        >
+          <option value="GBP">GBP</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+        </select>
+      </div>
+
+      <div
         style={{
-          width: 220,
-          background: "#0b1f2a",
-          color: "#ffffff",
-          padding: 20,
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 16,
+          marginBottom: 40,
         }}
       >
-        <h2 style={{ marginBottom: 30 }}>obvio</h2>
-        <nav style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <span>Dashboard</span>
-          <span>Allocation</span>
-          <span>Performance</span>
-          <span>Geography</span>
-        </nav>
-      </aside>
+        <Card title="Total Net Worth">
+          {currency} {latest.toLocaleString()}
+        </Card>
+        <Card title="Policies">3</Card>
+        <Card title="Last Updated">Today</Card>
+      </div>
 
-      {/* Main */}
-      <main style={{ flex: 1, padding: 32, background: "#f5f7f9" }}>
-        <h1 style={{ marginBottom: 12 }}>Client Overview</h1>
+      <h2>Portfolio Performance (Since Inception)</h2>
 
-        {/* Currency selector */}
-        <div style={{ marginBottom: 24 }}>
-          Currency:&nbsp;
-          <select
-            value={currency}
-            onChange={(e) =>
-              setCurrency(e.target.value as Currency)
-            }
-          >
-            <option value="GBP">GBP</option>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-          </select>
-        </div>
+      <div style={{ width: "100%", height: 340 }}>
+        <ResponsiveContainer>
+          <LineChart data={displayHistory}>
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="#0b5cff"
+              strokeWidth={3}
+              dot={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </Layout>
+  );
+}
 
-        {/* Summary cards */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 16,
-            marginBottom: 40,
-          }}
-        >
-          <div style={cardStyle}>
-            <strong>Total Net Worth</strong>
-            <div style={{ fontSize: 22, marginTop: 8 }}>
-              {currency} {latestValue.toLocaleString()}
-            </div>
-          </div>
-
-          <div style={cardStyle}>
-            <strong>Policies</strong>
-            <div style={{ fontSize: 22, marginTop: 8 }}>3</div>
-          </div>
-
-          <div style={cardStyle}>
-            <strong>Last Updated</strong>
-            <div style={{ fontSize: 22, marginTop: 8 }}>
-              Today
-            </div>
-          </div>
-        </div>
-
-        {/* Performance graph */}
-        <h2 style={{ marginBottom: 16 }}>
-          Portfolio Performance (Since Inception)
-        </h2>
-
-        <div
-          style={{
-            width: "100%",
-            height: 340,
-            background: "#ffffff",
-            borderRadius: 12,
-            padding: 16,
-            boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-          }}
-        >
-          <ResponsiveContainer>
-            <LineChart data={displayHistory}>
-              <XAxis dataKey="date" />
-              <YAxis
-                tickFormatter={(v) =>
-                  `${currency} ${v / 1000}k`
-                }
-              />
-              <Tooltip
-                formatter={(v: number) =>
+function Card({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        background: "#ffffff",
+        padding: 16,
+        borderRadius: 12,
+        boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+      }}
+    >
+      <strong>{title}</strong>
+      <div style={{ fontSize: 22, marginTop: 8 }}>
+        {children}
+      </div>
+    </div>
+  );
+}
