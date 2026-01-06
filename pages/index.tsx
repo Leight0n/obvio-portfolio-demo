@@ -1,134 +1,97 @@
-import { useMemo, useState } from "react";
-import { mockPortfolio } from "../data/mockPortfolio";
-import { fxRates } from "../data/fxRates";
+"use client";
 
-export default function Dashboard() {
-  const [currency, setCurrency] = useState("GBP");
+import { useState } from "react";
+import PolicyPie from "../components/PolicyPie";
 
-  const totalNetWorth = useMemo(() => {
-    const total = mockPortfolio.policies.reduce((sum, policy) => {
-      const valueInGbp = policy.value * fxRates[policy.currency];
-      const displayValue = valueInGbp / fxRates[currency];
-      return sum + displayValue;
-    }, 0);
+type Currency = "GBP" | "EUR" | "USD";
 
-    return Math.round(total);
-  }, [currency]);
+const FX_RATES: Record<Currency, number> = {
+  GBP: 1,
+  EUR: 1.17,
+  USD: 1.27,
+};
+
+export default function Home() {
+  const [currency, setCurrency] = useState<Currency>("GBP");
+
+  const totalGBP = 2092600;
+
+  const convertedTotal = Math.round(totalGBP * FX_RATES[currency]);
+
+  const policyData = [
+    { name: "Ardan EUR Portfolio", value: 780000 },
+    { name: "Ardan USD Portfolio", value: 640000 },
+    { name: "Offshore Bond", value: 672600 },
+  ];
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "system-ui" }}>
-      {/* Sidebar */}
-      <aside
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "#f8fafc",
+        padding: "2rem",
+        fontFamily:
+          "system-ui, -apple-system, BlinkMacSystemFont, Segoe UI",
+      }}
+    >
+      <h1 style={{ fontSize: "2rem", marginBottom: "1.5rem" }}>
+        Client Overview
+      </h1>
+
+      {/* Currency Selector */}
+      <div style={{ marginBottom: "1.5rem" }}>
+        <label style={{ marginRight: "0.5rem" }}>Currency:</label>
+        <select
+          value={currency}
+          onChange={(e) => setCurrency(e.target.value as Currency)}
+        >
+          <option value="GBP">GBP</option>
+          <option value="EUR">EUR</option>
+          <option value="USD">USD</option>
+        </select>
+      </div>
+
+      {/* Summary Cards */}
+      <div
         style={{
-          width: 220,
-          background: "#0b1f2a",
-          color: "#ffffff",
-          padding: 20
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: "1rem",
+          marginBottom: "2rem",
         }}
       >
-        <h2 style={{ marginBottom: 30 }}>obvio</h2>
-        <nav style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <span>Dashboard</span>
-          <span>Accounts</span>
-          <span>Allocation</span>
-          <span>Geography</span>
-        </nav>
-      </aside>
-
-      {/* Main content */}
-      <main style={{ flex: 1, padding: 40, background: "#f5f7f9" }}>
-        {/* Header */}
-        <header
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 40
-          }}
-        >
-          <h1>Client Overview</h1>
-
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            style={{ padding: 6 }}
-          >
-            <option value="GBP">GBP</option>
-            <option value="EUR">EUR</option>
-            <option value="USD">USD</option>
-            <option value="AED">AED</option>
-            <option value="AUD">AUD</option>
-            <option value="QAR">QAR</option>
-            <option value="SAR">SAR</option>
-          </select>
-        </header>
-
-        {/* Cards */}
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 20
-          }}
-        >
-          <div style={cardStyle}>
-            <h3>Total Net Worth</h3>
-            <p style={{ fontSize: 28 }}>
-              {currency} {totalNetWorth.toLocaleString()}
-            </p>
-            <p style={{ opacity: 0.7, marginTop: 6, fontSize: 12 }}>
-              Converted using mock FX (GBP base)
-            </p>
+        <div style={cardStyle}>
+          <strong>Total Net Worth</strong>
+          <div style={{ fontSize: "1.4rem", marginTop: "0.5rem" }}>
+            {currency} {convertedTotal.toLocaleString()}
           </div>
+        </div>
 
-          <div style={cardStyle}>
-            <h3>Policies</h3>
-            <p>{mockPortfolio.policies.length} Active</p>
+        <div style={cardStyle}>
+          <strong>Policies</strong>
+          <div style={{ fontSize: "1.4rem", marginTop: "0.5rem" }}>
+            {policyData.length}
           </div>
+        </div>
 
-          <div style={cardStyle}>
-            <h3>Last Updated</h3>
-            <p>Today</p>
-          </div>
-        </section>
+        <div style={cardStyle}>
+          <strong>Last Updated</strong>
+          <div style={{ marginTop: "0.5rem" }}>Today</div>
+        </div>
+      </div>
 
-        {/* Policies list (simple, for clarity) */}
-        <section style={{ marginTop: 30 }}>
-          <h2 style={{ marginBottom: 10 }}>Policies</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10 }}>
-            {mockPortfolio.policies.map((p) => (
-              <div key={p.id} style={rowStyle}>
-                <div>
-                  <strong>{p.name}</strong>
-                  <div style={{ opacity: 0.7, fontSize: 12 }}>
-                    {p.provider} • {p.currency}
-                  </div>
-                </div>
-                <div style={{ fontWeight: 700 }}>
-                  {p.currency} {p.value.toLocaleString()}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      </main>
-    </div>
+      {/* Policy Allocation Pie */}
+      <div>
+        <h2 style={{ marginBottom: "1rem" }}>Portfolio Allocation</h2>
+        <PolicyPie data={policyData} />
+      </div>
+    </main>
   );
 }
 
 const cardStyle: React.CSSProperties = {
   background: "#ffffff",
-  padding: 20,
-  borderRadius: 8,
-  boxShadow: "0 2px 6px rgba(0,0,0,0.08)"
-};
-
-const rowStyle: React.CSSProperties = {
-  background: "#ffffff",
-  padding: 14,
-  borderRadius: 8,
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
+  padding: "1rem",
+  borderRadius: "8px",
+  boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
 };
