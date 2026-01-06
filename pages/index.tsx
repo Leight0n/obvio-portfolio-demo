@@ -1,97 +1,163 @@
-"use client";
-
 import { useState } from "react";
-import PolicyPie from "../components/PolicyPie";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
-type Currency = "GBP" | "EUR" | "USD";
+/* =========================
+   TYPES
+========================= */
+type Currency = "GBP" | "USD" | "EUR";
 
-const FX_RATES: Record<Currency, number> = {
-  GBP: 1,
-  EUR: 1.17,
-  USD: 1.27,
+type PortfolioPoint = {
+  date: string;
+  totalValue: number; // base GBP
 };
 
-export default function Home() {
+/* =========================
+   MOCK DATA (since inception)
+========================= */
+const portfolioHistory: PortfolioPoint[] = [
+  { date: "2019-01", totalValue: 820000 },
+  { date: "2019-06", totalValue: 865000 },
+  { date: "2020-01", totalValue: 910000 },
+  { date: "2020-06", totalValue: 940000 },
+  { date: "2021-01", totalValue: 1020000 },
+  { date: "2021-06", totalValue: 1180000 },
+  { date: "2022-01", totalValue: 1320000 },
+  { date: "2022-06", totalValue: 1400000 },
+  { date: "2023-01", totalValue: 1650000 },
+  { date: "2023-06", totalValue: 1820000 },
+  { date: "2024-01", totalValue: 1950000 },
+  { date: "2024-06", totalValue: 2092600 },
+];
+
+/* =========================
+   FX RATES (mock)
+========================= */
+const fxRates: Record<Currency, number> = {
+  GBP: 1,
+  USD: 1.27,
+  EUR: 1.17,
+};
+
+/* =========================
+   PAGE
+========================= */
+export default function Dashboard() {
   const [currency, setCurrency] = useState<Currency>("GBP");
 
-  const totalGBP = 2092600;
+  const fx = fxRates[currency];
 
-  const convertedTotal = Math.round(totalGBP * FX_RATES[currency]);
+  const displayData = portfolioHistory.map((p) => ({
+    date: p.date,
+    value: Math.round(p.totalValue * fx),
+  }));
 
-  const policyData = [
-    { name: "Ardan EUR Portfolio", value: 780000 },
-    { name: "Ardan USD Portfolio", value: 640000 },
-    { name: "Offshore Bond", value: 672600 },
-  ];
+  const latestValue =
+    displayData[displayData.length - 1]?.value ?? 0;
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#f8fafc",
-        padding: "2rem",
-        fontFamily:
-          "system-ui, -apple-system, BlinkMacSystemFont, Segoe UI",
-      }}
-    >
-      <h1 style={{ fontSize: "2rem", marginBottom: "1.5rem" }}>
-        Client Overview
-      </h1>
+    <main style={{ padding: "32px", fontFamily: "system-ui" }}>
+      <h1 style={{ marginBottom: "8px" }}>Client Overview</h1>
 
-      {/* Currency Selector */}
-      <div style={{ marginBottom: "1.5rem" }}>
-        <label style={{ marginRight: "0.5rem" }}>Currency:</label>
+      {/* Currency selector */}
+      <div style={{ marginBottom: "24px" }}>
+        Currency:&nbsp;
         <select
           value={currency}
-          onChange={(e) => setCurrency(e.target.value as Currency)}
+          onChange={(e) =>
+            setCurrency(e.target.value as Currency)
+          }
         >
           <option value="GBP">GBP</option>
-          <option value="EUR">EUR</option>
           <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
         </select>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary cards */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: "1rem",
-          marginBottom: "2rem",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: "16px",
+          marginBottom: "40px",
         }}
       >
         <div style={cardStyle}>
           <strong>Total Net Worth</strong>
-          <div style={{ fontSize: "1.4rem", marginTop: "0.5rem" }}>
-            {currency} {convertedTotal.toLocaleString()}
+          <div style={{ fontSize: "22px", marginTop: "8px" }}>
+            {currency} {latestValue.toLocaleString()}
           </div>
         </div>
 
         <div style={cardStyle}>
           <strong>Policies</strong>
-          <div style={{ fontSize: "1.4rem", marginTop: "0.5rem" }}>
-            {policyData.length}
+          <div style={{ fontSize: "22px", marginTop: "8px" }}>
+            3
           </div>
         </div>
 
         <div style={cardStyle}>
           <strong>Last Updated</strong>
-          <div style={{ marginTop: "0.5rem" }}>Today</div>
+          <div style={{ fontSize: "22px", marginTop: "8px" }}>
+            Today
+          </div>
         </div>
       </div>
 
-      {/* Policy Allocation Pie */}
-      <div>
-        <h2 style={{ marginBottom: "1rem" }}>Portfolio Allocation</h2>
-        <PolicyPie data={policyData} />
+      {/* Performance chart */}
+      <h2 style={{ marginBottom: "16px" }}>
+        Portfolio Performance (Since Inception)
+      </h2>
+
+      <div
+        style={{
+          width: "100%",
+          height: 320,
+          background: "#fafafa",
+          borderRadius: "12px",
+          padding: "16px",
+        }}
+      >
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={displayData}>
+            <XAxis dataKey="date" />
+            <YAxis
+              tickFormatter={(v) =>
+                `${currency} ${v / 1000}k`
+              }
+            />
+            <Tooltip
+              formatter={(v: number) =>
+                `${currency} ${v.toLocaleString()}`
+              }
+            />
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="#0b5cff"
+              strokeWidth={3}
+              dot={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </main>
   );
 }
 
+/* =========================
+   STYLES
+========================= */
 const cardStyle: React.CSSProperties = {
   background: "#ffffff",
-  padding: "1rem",
-  borderRadius: "8px",
-  boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+  padding: "16px",
+  borderRadius: "12px",
+  boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
 };
