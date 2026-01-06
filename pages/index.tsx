@@ -19,7 +19,7 @@ type PortfolioPoint = {
 };
 
 /* =========================
-   MOCK DATA (since inception)
+   MOCK PERFORMANCE DATA
 ========================= */
 const portfolioHistory: PortfolioPoint[] = [
   { date: "2019-01", totalValue: 820000 },
@@ -37,7 +37,7 @@ const portfolioHistory: PortfolioPoint[] = [
 ];
 
 /* =========================
-   FX RATES (mock)
+   FX (mock)
 ========================= */
 const fxRates: Record<Currency, number> = {
   GBP: 1,
@@ -53,111 +53,110 @@ export default function Dashboard() {
 
   const fx = fxRates[currency];
 
-  const displayData = portfolioHistory.map((p) => ({
+  const displayHistory = portfolioHistory.map((p) => ({
     date: p.date,
     value: Math.round(p.totalValue * fx),
   }));
 
   const latestValue =
-    displayData[displayData.length - 1]?.value ?? 0;
+    displayHistory[displayHistory.length - 1]?.value ?? 0;
 
   return (
-    <main style={{ padding: "32px", fontFamily: "system-ui" }}>
-      <h1 style={{ marginBottom: "8px" }}>Client Overview</h1>
+    <div
+      style={{
+        display: "flex",
+        minHeight: "100vh",
+        fontFamily: "system-ui",
+      }}
+    >
+      {/* Sidebar */}
+      <aside
+        style={{
+          width: 220,
+          background: "#0b1f2a",
+          color: "#ffffff",
+          padding: 20,
+        }}
+      >
+        <h2 style={{ marginBottom: 30 }}>obvio</h2>
+        <nav style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <span>Dashboard</span>
+          <span>Allocation</span>
+          <span>Performance</span>
+          <span>Geography</span>
+        </nav>
+      </aside>
 
-      {/* Currency selector */}
-      <div style={{ marginBottom: "24px" }}>
-        Currency:&nbsp;
-        <select
-          value={currency}
-          onChange={(e) =>
-            setCurrency(e.target.value as Currency)
-          }
+      {/* Main */}
+      <main style={{ flex: 1, padding: 32, background: "#f5f7f9" }}>
+        <h1 style={{ marginBottom: 12 }}>Client Overview</h1>
+
+        {/* Currency selector */}
+        <div style={{ marginBottom: 24 }}>
+          Currency:&nbsp;
+          <select
+            value={currency}
+            onChange={(e) =>
+              setCurrency(e.target.value as Currency)
+            }
+          >
+            <option value="GBP">GBP</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+          </select>
+        </div>
+
+        {/* Summary cards */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 16,
+            marginBottom: 40,
+          }}
         >
-          <option value="GBP">GBP</option>
-          <option value="USD">USD</option>
-          <option value="EUR">EUR</option>
-        </select>
-      </div>
+          <div style={cardStyle}>
+            <strong>Total Net Worth</strong>
+            <div style={{ fontSize: 22, marginTop: 8 }}>
+              {currency} {latestValue.toLocaleString()}
+            </div>
+          </div>
 
-      {/* Summary cards */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: "16px",
-          marginBottom: "40px",
-        }}
-      >
-        <div style={cardStyle}>
-          <strong>Total Net Worth</strong>
-          <div style={{ fontSize: "22px", marginTop: "8px" }}>
-            {currency} {latestValue.toLocaleString()}
+          <div style={cardStyle}>
+            <strong>Policies</strong>
+            <div style={{ fontSize: 22, marginTop: 8 }}>3</div>
+          </div>
+
+          <div style={cardStyle}>
+            <strong>Last Updated</strong>
+            <div style={{ fontSize: 22, marginTop: 8 }}>
+              Today
+            </div>
           </div>
         </div>
 
-        <div style={cardStyle}>
-          <strong>Policies</strong>
-          <div style={{ fontSize: "22px", marginTop: "8px" }}>
-            3
-          </div>
-        </div>
+        {/* Performance graph */}
+        <h2 style={{ marginBottom: 16 }}>
+          Portfolio Performance (Since Inception)
+        </h2>
 
-        <div style={cardStyle}>
-          <strong>Last Updated</strong>
-          <div style={{ fontSize: "22px", marginTop: "8px" }}>
-            Today
-          </div>
-        </div>
-      </div>
-
-      {/* Performance chart */}
-      <h2 style={{ marginBottom: "16px" }}>
-        Portfolio Performance (Since Inception)
-      </h2>
-
-      <div
-        style={{
-          width: "100%",
-          height: 320,
-          background: "#fafafa",
-          borderRadius: "12px",
-          padding: "16px",
-        }}
-      >
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={displayData}>
-            <XAxis dataKey="date" />
-            <YAxis
-              tickFormatter={(v) =>
-                `${currency} ${v / 1000}k`
-              }
-            />
-            <Tooltip
-              formatter={(v: number) =>
-                `${currency} ${v.toLocaleString()}`
-              }
-            />
-            <Line
-              type="monotone"
-              dataKey="value"
-              stroke="#0b5cff"
-              strokeWidth={3}
-              dot={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </main>
-  );
-}
-
-/* =========================
-   STYLES
-========================= */
-const cardStyle: React.CSSProperties = {
-  background: "#ffffff",
-  padding: "16px",
-  borderRadius: "12px",
-  boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-};
+        <div
+          style={{
+            width: "100%",
+            height: 340,
+            background: "#ffffff",
+            borderRadius: 12,
+            padding: 16,
+            boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+          }}
+        >
+          <ResponsiveContainer>
+            <LineChart data={displayHistory}>
+              <XAxis dataKey="date" />
+              <YAxis
+                tickFormatter={(v) =>
+                  `${currency} ${v / 1000}k`
+                }
+              />
+              <Tooltip
+                formatter={(v: number) =>
