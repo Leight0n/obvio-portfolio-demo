@@ -1,15 +1,30 @@
+import { useState } from "react";
 import { mockPortfolio } from "../data/mockPortfolio";
+import { fxRates } from "../data/fxRates";
+
 export default function Dashboard() {
+  const [currency, setCurrency] = useState("GBP");
+
+  const totalNetWorth = Math.round(
+    mockPortfolio.policies.reduce((sum, policy) => {
+      const valueInGbp = policy.value * fxRates[policy.currency];
+      const displayValue = valueInGbp / fxRates[currency];
+      return sum + displayValue;
+    }, 0)
+  );
+
   return (
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "system-ui" }}>
       
       {/* Sidebar */}
-      <aside style={{
-        width: 220,
-        background: "#0b1f2a",
-        color: "#fff",
-        padding: 20
-      }}>
+      <aside
+        style={{
+          width: 220,
+          background: "#0b1f2a",
+          color: "#ffffff",
+          padding: 20
+        }}
+      >
         <h2 style={{ marginBottom: 30 }}>obvio</h2>
         <nav style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <span>Dashboard</span>
@@ -20,37 +35,57 @@ export default function Dashboard() {
       </aside>
 
       {/* Main content */}
-      <main style={{ flex: 1, padding: 40, background: "#f5f7f9" }}>
-        
+      <main
+        style={{
+          flex: 1,
+          padding: 40,
+          background: "#f5f7f9"
+        }}
+      >
         {/* Header */}
-        <header style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 40
-        }}>
+        <header
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 40
+          }}
+        >
           <h1>Client Overview</h1>
-          <select>
-            <option>GBP</option>
-            <option>EUR</option>
-            <option>USD</option>
-            <option>AED</option>
-            <option>AUD</option>
+
+          <select
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            style={{ padding: 6 }}
+          >
+            <option value="GBP">GBP</option>
+            <option value="EUR">EUR</option>
+            <option value="USD">USD</option>
+            <option value="AED">AED</option>
+            <option value="AUD">AUD</option>
+            <option value="QAR">QAR</option>
+            <option value="SAR">SAR</option>
           </select>
         </header>
 
-        {/* Content blocks */}
-        <section style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+        {/* Dashboard cards */}
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 20
+          }}
+        >
           <div style={cardStyle}>
             <h3>Total Net Worth</h3>
-<p style={{ fontSize: 28 }}>
-  £{mockPortfolio.policies.reduce((sum, p) => sum + p.value, 0).toLocaleString()}
-</p>
+            <p style={{ fontSize: 28 }}>
+              {currency} {totalNetWorth.toLocaleString()}
+            </p>
           </div>
 
           <div style={cardStyle}>
             <h3>Policies</h3>
-            <p>3 Active</p>
+            <p>{mockPortfolio.policies.length} Active</p>
           </div>
 
           <div style={cardStyle}>
@@ -58,14 +93,13 @@ export default function Dashboard() {
             <p>Today</p>
           </div>
         </section>
-
       </main>
     </div>
   );
 }
 
 const cardStyle = {
-  background: "#fff",
+  background: "#ffffff",
   padding: 20,
   borderRadius: 8,
   boxShadow: "0 2px 6px rgba(0,0,0,0.08)"
